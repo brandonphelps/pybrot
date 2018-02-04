@@ -6,7 +6,7 @@ from tqdm import tqdm
 import time
 import functools
 
-MAX_ITER = 100
+MAX_ITER = 1000
 
 class ComplexNumber:
     def __init__(self, real, complex):
@@ -51,18 +51,18 @@ def escape_mandelbrot(complex_number):
         return True
 
 def find_iter(complex_number):
-    t = 1
-    while not escape_mandelbrot(func_z(t, complex_number)):
-        if t >= MAX_ITER:
-            return t
-        t += 1
-    return t
+    for i in range(1, MAX_ITER):
+        if escape_mandelbrot(func_z(i, complex_number)):
+            return i
+    return MAX_ITER
 
 def gen_grid(count, lower_left, upper_right):
     lower_left_x = -1.657
     lower_left_y = -.05
     upper_right_x = -1.55
     upper_right_y = .05
+    #print(lower_left)
+    #print(upper_right)
     for i in numpy.linspace(lower_left[0], upper_right[0], count):
         for j in numpy.linspace(lower_left[0], upper_right[0], count):
             yield (i, j)
@@ -83,9 +83,9 @@ def zoom_box(x, y, width, height):
 def main():
     grid = []
     count = 1000
-    zoom = zoom_box(-1.65, 0, .05, .8)
-    print("Zoom box: {}".format(zoom))
-    for j in tqdm(gen_grid(count, zoom[0], zoom[1]), total=(count*count)):
+    #zoom = zoom_box(-1.65, 0, 2, 2)
+    #print("Zoom box: {}".format(zoom))
+    for j in tqdm(gen_grid(count, (-1.757, -0.5), (0.00, .05)), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
 
     print(func_z.cache_info())
