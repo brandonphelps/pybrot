@@ -2,6 +2,8 @@ import math
 import numpy
 from color_test import colorer
 from progress.bar import Bar
+from tqdm import tqdm
+import time
 import functools
 
 MAX_ITER = 100
@@ -56,27 +58,35 @@ def find_iter(complex_number):
         t += 1
     return t
 
-def gen_grid(count):
-    upper_left_x = -1.657
-    upper_left_y = -.05
-    lower_right_x = -1.55
-    lower_right_y = .05
-    for i in numpy.linspace(upper_left_x, lower_right_x, count):
-        for j in numpy.linspace(upper_left_y, lower_right_y, count):
+def gen_grid(count, lower_left, upper_right):
+    lower_left_x = -1.657
+    lower_left_y = -.05
+    upper_right_x = -1.55
+    upper_right_y = .05
+    for i in numpy.linspace(lower_left[0], upper_right[0], count):
+        for j in numpy.linspace(lower_left[0], upper_right[0], count):
             yield (i, j)
 
-def untested(count):
-    return [-2 + (4/(count-1)) * x for x in range(0, count)]
+def zoom_box(x, y, width, height):
+    #lower_left_x = -1.657
+    #lower_left_y = -.05
+    #upper_right_x = -1.55
+    #upper_right_y = .05
 
-if __name__ == "__main__":
-    count = 10000
+    lower_left_x = (x - (width / 2))
+    upper_right_x = (x + (width / 2))
+    lower_left_y = (y - (height / 2))
+    upper_right_y = (y + (height / 2))
+    
+    return (lower_left_x, lower_left_y), (upper_right_x, upper_right_y)
+
+def main():
     grid = []
-
-    bar = Bar('Processing', max=count * count)
-    for j in gen_grid(count):
+    count = 1000
+    zoom = zoom_box(-1.65, 0, .05, .8))
+    print("Zoom box: {}".format(zoom))
+    for j in tqdm(gen_grid(count, zoom[0], zoom[1])), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
-        bar.next()
-    bar.finish()
 
     print(func_z.cache_info())
     
@@ -88,4 +98,11 @@ if __name__ == "__main__":
             new_grid[index_col][index_row] = grid[index_col * count + index_row]
     colorer(new_grid)
 
+def test_iter():
+    for i in range(1000):
+        yield i
+    
+
+if __name__ == "__main__":
+    main()
     # print("{} has an escape iter of: {}".format(t, find_iter(t)))
