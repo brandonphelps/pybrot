@@ -64,7 +64,7 @@ def gen_grid(count, lower_left, upper_right):
     #print(lower_left)
     #print(upper_right)
     for i in numpy.linspace(lower_left[0], upper_right[0], count):
-        for j in numpy.linspace(lower_left[0], upper_right[0], count):
+        for j in numpy.linspace(lower_left[1], upper_right[1], count):
             yield (i, j)
 
 def zoom_box(x, y, width, height):
