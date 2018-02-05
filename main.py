@@ -85,33 +85,64 @@ def translate_coords(c1,c2):
 
 def main():
     grid = []
-    count = 100
-    lower_left = (-1.757, -0.5)
-    upper_right = (-0.5, 0.05)
+    count = 2000
 
-    if lower_left[0] > upper_right[0] or lower_left[1] > upper_right[1]:
-        raise Exception("Invalid coord options")
-
-    lower_left, upper_right = translate_coords(upper_right, lower_left)
-        
-    for j in tqdm(gen_grid(count, lower_left, upper_right), total=(count*count)):
+    upper_left = (-1.750, 0.01)
+    lower_right = (-1.55225, -0.01)
+    
+    for j in tqdm(gen_grid(count, upper_left, lower_right), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
 
     print(func_z.cache_info())
     
-    new_grid = [[0 for i in range(count)] for j in range(count)]
+    new_grid = []
 
-    
-    for index_col, col in enumerate(new_grid):
-        for index_row, row in enumerate(col):
-            new_grid[index_col][index_row] = grid[index_col * count + index_row]
+    tmp = []
+    for index, j in enumerate(grid):
+        tmp.append(j)
+        if index % count == count - 1:
+            new_grid.append(tmp)
+            tmp = []
+
     colorer(new_grid)
 
-def test_iter():
-    for i in range(1000):
-        yield i
+def oned_to_twod(width, height):
+
+    lower_left = (0, 0)
+    upper_right = (10, 10)
     
+    for width_index, i in enumerate(numpy.linspace(lower_left[0], width, width)):
+        for j in numpy.linspace(lower_left[0], height, height):
+            print("({:5.2f}, {:5.2f}) ".format(i, j), end="")
+            yield (i, j)
+        print("")
+        
 
 if __name__ == "__main__":
     main()
+    width = 10
+    height = 5
+    oned_r = [i for i in oned_to_twod(width, height)]
+
+    print("printing one d")
+
+    twod_r = []
+
+    
+    tmp = []
+
+    for index, j in enumerate(oned_r):
+        tmp.append(j)
+        print("({:5.2f}, {:5.2f}) ".format(j[0], j[1]), end="")
+        if index % height == height - 1:
+            twod_r.append(tmp)
+            tmp = []
+            print("")
+
+    print("printing two d")
+    for row in twod_r:
+        print(row)
+
+
+    # main()
     # print("{} has an escape iter of: {}".format(t, find_iter(t)))
