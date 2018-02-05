@@ -94,7 +94,7 @@ def main():
 
     lower_left, upper_right = translate_coords(upper_right, lower_left)
         
-    for j in tqdm(gen_grid(count, (-1.757, 0.05), (-0.5, -.5)), total=(count*count)):
+    for j in tqdm(gen_grid(count, lower_left, upper_right), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
 
     print(func_z.cache_info())
