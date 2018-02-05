@@ -85,7 +85,7 @@ def translate_coords(c1,c2):
 
 def main():
     grid = []
-    count = 1000
+    count = 100
     count = 5
     lower_left = (-1.757, -0.5)
     upper_right = (-0.5, 0.05)
@@ -93,14 +93,7 @@ def main():
     if lower_left[0] > upper_right[0] or lower_left[1] > upper_right[1]:
         raise Exception("Invalid coord options")
 
-
     lower_left, upper_right = translate_coords(upper_right, lower_left)
-
-    for index, i in enumerate(gen_grid(count, lower_left, upper_right)):
-        print("[{:< 6}, {:< 6}] ".format(*i), end="")
-        if index % count == 4:
-            print("")
-    sys.exit()
         
     for j in tqdm(gen_grid(count, (-1.757, 0.05), (-0.5, -.5)), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
