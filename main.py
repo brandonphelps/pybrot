@@ -80,12 +80,29 @@ def zoom_box(x, y, width, height):
     
     return (lower_left_x, lower_left_y), (upper_right_x, upper_right_y)
 
+def translate_coords(c1,c2):
+    return (c1[0], c2[1]), (c2[0], c1[1])
+
 def main():
     grid = []
     count = 1000
-    #zoom = zoom_box(-1.65, 0, 2, 2)
-    #print("Zoom box: {}".format(zoom))
-    for j in tqdm(gen_grid(count, (-1.757, -0.5), (-0.5, .05)), total=(count*count)):
+    count = 5
+    lower_left = (-1.757, -0.5)
+    upper_right = (-0.5, 0.05)
+
+    if lower_left[0] > upper_right[0] or lower_left[1] > upper_right[1]:
+        raise Exception("Invalid coord options")
+
+
+    lower_left, upper_right = translate_coords(upper_right, lower_left)
+
+    for index, i in enumerate(gen_grid(count, lower_left, upper_right)):
+        print("[{:< 6}, {:< 6}] ".format(*i), end="")
+        if index % count == 4:
+            print("")
+    sys.exit()
+        
+    for j in tqdm(gen_grid(count, (-1.757, 0.05), (-0.5, -.5)), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
 
     print(func_z.cache_info())
