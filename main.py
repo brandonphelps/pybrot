@@ -86,7 +86,6 @@ def translate_coords(c1,c2):
 def main():
     grid = []
     count = 100
-    count = 5
     lower_left = (-1.757, -0.5)
     upper_right = (-0.5, 0.05)
 
