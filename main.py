@@ -85,7 +85,7 @@ def main():
     count = 1000
     #zoom = zoom_box(-1.65, 0, 2, 2)
     #print("Zoom box: {}".format(zoom))
-    for j in tqdm(gen_grid(count, (-1.757, -0.5), (0.00, .05)), total=(count*count)):
+    for j in tqdm(gen_grid(count, (-1.757, -0.5), (-0.5, .05)), total=(count*count)):
         grid.append(find_iter(ComplexNumber(*j)))
 
     print(func_z.cache_info())
