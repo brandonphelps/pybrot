@@ -17,6 +17,7 @@ def base_value(obj):
     elif type(obj) == ComplexNumber:
         return ComplexNumber(0, 0)
 
+#Todo: experiemntal can fail if not enough workers
 @app.task
 def func_z_celery(n, c):
     if n == 0:
@@ -30,6 +31,7 @@ def func_z_celery(n, c):
                 return 0
         return k1 * k1 + c
 
+@app.task
 def func_z(n, c):
     if n == 0:
         return base_value(c)
