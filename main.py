@@ -5,6 +5,7 @@ from progress.bar import Bar
 from tqdm import tqdm
 import time
 import functools
+from mandelbrot import func_z
 
 MAX_ITER = 1000
 
@@ -36,12 +37,6 @@ def base_value(obj):
     elif type(obj) == ComplexNumber:
         return ComplexNumber(0, 0)
 
-@functools.lru_cache(maxsize=2000000)
-def func_z(n, c):
-    if n == 0:
-        return base_value(c)
-    else:
-        return func_z(n-1, c) * func_z(n-1, c) + c
 
 def escape_mandelbrot(complex_number):
     tmp = abs(complex_number) 
