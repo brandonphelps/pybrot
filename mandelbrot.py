@@ -31,9 +31,16 @@ def func_z_celery(n, c):
                 return 0
         return k1 * k1 + c
 
-@app.task
 def func_z(n, c):
     if n == 0:
         return base_value(c)
     else:
         return func_z(n-1, c) * func_z(n-1, c) + c
+
+@app.task
+def find_iter(complex_number):
+    for i in range(1, MAX_ITER):
+        if escape_mandelbrot(func_z(i, complex_number)):
+            return i
+    return MAX_ITER
+

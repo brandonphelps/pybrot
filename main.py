@@ -12,7 +12,6 @@ MAX_ITER = 1000
 from objects import ComplexNumber
 
 
-
 def escape_mandelbrot(complex_number):
     tmp = abs(complex_number) 
     if tmp  < 2:
@@ -20,11 +19,6 @@ def escape_mandelbrot(complex_number):
     else:
         return True
 
-def find_iter(complex_number):
-    for i in range(1, MAX_ITER):
-        if escape_mandelbrot(func_z(i, complex_number)):
-            return i
-    return MAX_ITER
 
 def gen_grid(count, lower_left, upper_right):
     lower_left_x = -1.657
@@ -52,6 +46,33 @@ def zoom_box(x, y, width, height):
 
 def translate_coords(c1,c2):
     return (c1[0], c2[1]), (c2[0], c1[1])
+
+
+def celery_construct_grid_coords(count, upper_left, lower_right):
+    grid = []
+    for j in tqdm(gen_grid(count, upper_left, lower_right), total=(count*count)):
+        grid.append(find_iter.delay(ComplexNumber(*j)))
+    return grid
+
+def celery_main():
+    grid = construct_grid_coords(2000, (-2, 2), (2, -2))
+
+    resultant_grid = [0 for i in range(len(grid))]
+
+    still_working = True
+    while still_working:
+        still_working = False
+        for index, i in enumerate(grid):
+            try:
+                if i.status == 'SUCCESS':
+                   grid[index] = i.result
+                elif i.status == 'FAILURE':
+                    grid[index] = 1
+                elif i.status == 'PENDING' or i.status == 'STARTED' or i.status == 'RETRY':
+                    still_working = True
+            except:
+                pass
+    return grid
 
 def main():
     grid = []
@@ -89,30 +110,4 @@ def oned_to_twod(width, height):
         
 
 if __name__ == "__main__":
-    main()
-    width = 10
-    height = 5
-    oned_r = [i for i in oned_to_twod(width, height)]
-
-    print("printing one d")
-
-    twod_r = []
-
-    
-    tmp = []
-
-    for index, j in enumerate(oned_r):
-        tmp.append(j)
-        print("({:5.2f}, {:5.2f}) ".format(j[0], j[1]), end="")
-        if index % height == height - 1:
-            twod_r.append(tmp)
-            tmp = []
-            print("")
-
-    print("printing two d")
-    for row in twod_r:
-        print(row)
-
-
-    # main()
-    # print("{} has an escape iter of: {}".format(t, find_iter(t)))
+    celery_main()
