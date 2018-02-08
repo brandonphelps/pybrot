@@ -6,7 +6,7 @@ import time
 import functools
 from mandelbrot import func_z, find_iter
 
-MAX_ITER = 30
+MAX_ITER = 25
 
 from objects import ComplexNumber
 
@@ -41,7 +41,7 @@ def translate_coords(c1,c2):
 
 def celery_construct_grid_coords(count, upper_left, lower_right):
     grid = []
-    for j in tqdm(gen_grid(count, upper_left, lower_right), total=(count*count)):
+    for j in gen_grid(count, upper_left, lower_right):
         grid.append(find_iter.delay(j[0], j[1], MAX_ITER))
     return grid
 
@@ -108,5 +108,5 @@ def oned_to_twod(width, height):
         print("")
 
 if __name__ == "__main__":
-    new_grid = celery_main(20)
+    new_grid = celery_main(30)
     colorer(new_grid)
