@@ -11,12 +11,6 @@ MAX_ITER = 1000
 from objects import ComplexNumber
 
 
-def escape_mandelbrot(complex_number):
-    tmp = abs(complex_number) 
-    if tmp  < 2:
-        return False
-    else:
-        return True
 
 
 def gen_grid(count, lower_left, upper_right):
@@ -50,7 +44,7 @@ def translate_coords(c1,c2):
 def celery_construct_grid_coords(count, upper_left, lower_right):
     grid = []
     for j in tqdm(gen_grid(count, upper_left, lower_right), total=(count*count)):
-        grid.append(find_iter.delay(j[0], j[1]))
+        grid.append(find_iter.delay(j[0], j[1], MAX_ITER))
     return grid
 
 def celery_main():

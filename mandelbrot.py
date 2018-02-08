@@ -38,6 +38,13 @@ def func_z(n, c):
     else:
         return func_z(n-1, c) * func_z(n-1, c) + c
 
+def escape_mandelbrot(complex_number):
+    tmp = abs(complex_number) 
+    if tmp  < 2:
+        return False
+    else:
+        return True
+
 @app.task
 def find_iter(real, imag, MAX_ITER):
     for i in range(1, MAX_ITER):
