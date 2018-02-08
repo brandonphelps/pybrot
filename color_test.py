@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw
 import sys
+import tqdm
 
 
 def foo(count):
@@ -31,7 +32,7 @@ def colorer(grid):
 
 	image = Image.new('RGB', (len(grid), len(grid[0])))
 	draw = ImageDraw.Draw(image)
-	for row_index, row in enumerate(grid):
+	for row_index, row in tqdm(enumerate(grid)):
 		for col_index, value in enumerate(row):
 			# print((value - min_) / (max_ - min_))
 
