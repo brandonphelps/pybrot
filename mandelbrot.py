@@ -39,7 +39,7 @@ def func_z(n, c):
         return func_z(n-1, c) * func_z(n-1, c) + c
 
 @app.task
-def find_iter(real, imag):
+def find_iter(real, imag, MAX_ITER):
     for i in range(1, MAX_ITER):
         if escape_mandelbrot(func_z(i, ComplexNumber(real, imag))):
             return i
