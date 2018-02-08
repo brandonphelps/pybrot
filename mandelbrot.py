@@ -22,7 +22,7 @@ def func_z_celery(n, c):
     if n == 0:
         return base_value(c)
     else:
-        k1 = func_z_celery.apply_async(n-1, c)
+        k1 = func_z_celery.delay(n-1, c)
         while k1.status != 'SUCCESS':
             print("waiting for result on {} {}".format(n-1, c))
             time.sleep(1)
