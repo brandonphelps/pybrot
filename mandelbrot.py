@@ -11,7 +11,6 @@ app = Celery('mandel', broker='redis://192.168.1.200:6379/0',
 
 from objects import ComplexNumber
 
-
 def base_value(obj):
     if type(obj) == int:
         return 0
@@ -23,8 +22,8 @@ def func_z_celery(n, c):
     if n == 0:
         return base_value(c)
     else:
-        k1 = func_z.delay(n-1, c)
-        k2 = func_z.delay(n-1, c)
+        k1 = func_z_celery.delay(n-1, c)
+        k2 = func_z_celery.delay(n-1, c)
         while k1.status == 'PENDING':
             time.sleep(1)
         while k2.status == 'PENDING':
