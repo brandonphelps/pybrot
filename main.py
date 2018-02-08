@@ -6,11 +6,9 @@ import time
 import functools
 from mandelbrot import func_z, find_iter
 
-MAX_ITER = 1000
+MAX_ITER = 30
 
 from objects import ComplexNumber
-
-
 
 
 def gen_grid(count, lower_left, upper_right):
@@ -47,25 +45,33 @@ def celery_construct_grid_coords(count, upper_left, lower_right):
         grid.append(find_iter.delay(j[0], j[1], MAX_ITER))
     return grid
 
-def celery_main():
-    grid = celery_construct_grid_coords(20, (-2, 2), (2, -2))
+def celery_main(count):
+    grid = celery_construct_grid_coords(count, (-2, 2), (2, -2))
 
-    resultant_grid = [0 for i in range(len(grid))]
+    tasks_pending = True
+    while tasks_pending:
+        tasks_pending = False
+        count_of_pending = 0
+        for i in grid:
+            if i.status == 'PENDING':
+                tasks_pending = True
+                count_of_pending += 1
+        print("Waiting for tasks to finish: {}".format(count_of_pending))
+        time.sleep(1)
 
-    still_working = True
-    while still_working:
-        still_working = False
-        for index, i in enumerate(grid):
-            try:
-                if i.status == 'SUCCESS':
-                   grid[index] = i.result
-                elif i.status == 'FAILURE':
-                    grid[index] = 1
-                elif i.status == 'PENDING' or i.status == 'STARTED' or i.status == 'RETRY':
-                    still_working = True
-            except:
-                pass
-    return grid
+    for i in grid:
+        print(i.result)
+
+    d2_array = []
+
+    k = 0
+    for i in range(count):
+        tmp = []
+        for j in range(count):
+            tmp.append(grid[k].result)
+            k += 1
+        d2_array.append(tmp)
+    return d2_array
 
 def main():
     grid = []
@@ -100,7 +106,7 @@ def oned_to_twod(width, height):
             print("({:5.2f}, {:5.2f}) ".format(i, j), end="")
             yield (i, j)
         print("")
-        
 
 if __name__ == "__main__":
-    celery_main()
+    new_grid = celery_main(20)
+    colorer(new_grid)

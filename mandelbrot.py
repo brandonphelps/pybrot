@@ -47,7 +47,9 @@ def escape_mandelbrot(complex_number):
 
 @app.task
 def find_iter(real, imag, MAX_ITER):
+    print("working on {} {}".format(real, imag))
     for i in range(1, MAX_ITER):
+        print("Current iter: {}".format(i))
         if escape_mandelbrot(func_z(i, ComplexNumber(real, imag))):
             return i
     return MAX_ITER
