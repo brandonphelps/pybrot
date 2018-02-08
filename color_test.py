@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw
 import sys
-import tqdm
+from tqdm import tqdm
 
 
 def foo(count):

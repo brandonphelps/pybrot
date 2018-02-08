@@ -20,10 +20,7 @@ def gen_grid(count, upper_left, lower_right):
 
 def celery_construct_grid_coords(count, upper_left, lower_right):
     grid = []
-    for index, j in enumerate(gen_grid(count, upper_left, lower_right)):
-        #print("({:4.2f}, {:4.2f})".format(j[0], j[1]), end="")
-        #if index % count == count - 1:
-        #    print("")
+    for j in tqdm(gen_grid(count, upper_left, lower_right), 'queing up jobs', total=count*count):
         grid.append(find_iter.delay(j[0], j[1], MAX_ITER))
     return grid
 
@@ -40,9 +37,6 @@ def celery_main(count):
                 count_of_pending += 1
         print("Waiting for tasks to finish: {}".format(count_of_pending))
         time.sleep(1)
-
-    for i in grid:
-        print(i.result)
 
     d2_array = []
 
