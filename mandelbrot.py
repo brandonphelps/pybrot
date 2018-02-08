@@ -22,13 +22,13 @@ def func_z_celery(n, c):
     if n == 0:
         return base_value(c)
     else:
-        k1 = func_z_celery.delay(n-1, c)
-        k2 = func_z_celery.delay(n-1, c)
-        while k1.status == 'PENDING':
+        k1 = func_z_celery.apply_async(n-1, c)
+        while k1.status != 'SUCCESS':
+            print("waiting for result on {} {}".format(n-1, c))
             time.sleep(1)
-        while k2.status == 'PENDING':
-            time.sleep(1)
-        return k1.result * k2.result + c
+            if k1.status == 'FAILED':
+                return 0
+        return k1 * k1 + c
 
 def func_z(n, c):
     if n == 0:
