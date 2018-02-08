@@ -48,13 +48,14 @@ def escape_mandelbrot(complex_number):
 @app.task
 def find_iter(real, imag, MAX_ITER):
     print("working on {} {}".format(real, imag))
-    c = 0
+    c = ComplexNumber(real, real)
+    itera = 0
     z = ComplexNumber(0, 0)
     while abs(z) <= 2.0:
-        print("Current iter: {}".format(i))
-        c += 1
-        if c > MAX_ITER:
+        print("Current iter: {}".format(itera))
+        itera += 1
+        if itera > MAX_ITER:
             break
-        z = z * z + c 
-    return c
+        z = z * z + c
+    return itera
 

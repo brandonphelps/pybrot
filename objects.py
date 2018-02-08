@@ -24,9 +24,6 @@ class ComplexNumber:
         return ComplexNumber(self._real + other._real,
                              self._complex + other._complex)
 
-    def default(self, o):
-        return {'real' : o._real, 'complex' : o._complex}
-
     def __mul__(self, other):
         temp = ComplexNumber(0, 0)
         temp._real = (self._real * other._real) - (self._complex * other._complex)
@@ -35,6 +32,12 @@ class ComplexNumber:
 
     def __abs__(self):
         return math.sqrt((self._real * self._real) + (self._complex * self._complex))
+
+    def __eq__(self, other):
+        if other._real == self._real and other._complex == self._complex:
+            return True
+        else:
+            return False
 
     def __str__(self):
         return "{} + {}i".format(self._real, self._complex)
