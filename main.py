@@ -1,11 +1,10 @@
 import math
 import numpy
 from color_test import colorer
-from progress.bar import Bar
 from tqdm import tqdm
 import time
 import functools
-from mandelbrot import func_z
+from mandelbrot import func_z, find_iter
 
 MAX_ITER = 1000
 
@@ -51,11 +50,11 @@ def translate_coords(c1,c2):
 def celery_construct_grid_coords(count, upper_left, lower_right):
     grid = []
     for j in tqdm(gen_grid(count, upper_left, lower_right), total=(count*count)):
-        grid.append(find_iter.delay(ComplexNumber(*j)))
+        grid.append(find_iter.delay(j[0], j[1]))
     return grid
 
 def celery_main():
-    grid = construct_grid_coords(2000, (-2, 2), (2, -2))
+    grid = celery_construct_grid_coords(2000, (-2, 2), (2, -2))
 
     resultant_grid = [0 for i in range(len(grid))]
 

@@ -3,6 +3,7 @@ from celery import Celery
 import getpass
 import time
 
+
 t = '192.168.1.200'
 
 app = Celery('mandel', broker='redis://192.168.1.200:6379/0',
@@ -38,9 +39,9 @@ def func_z(n, c):
         return func_z(n-1, c) * func_z(n-1, c) + c
 
 @app.task
-def find_iter(complex_number):
+def find_iter(real, imag):
     for i in range(1, MAX_ITER):
-        if escape_mandelbrot(func_z(i, complex_number)):
+        if escape_mandelbrot(func_z(i, ComplexNumber(real, imag))):
             return i
     return MAX_ITER
 
