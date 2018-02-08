@@ -48,7 +48,7 @@ def celery_construct_grid_coords(count, upper_left, lower_right):
     return grid
 
 def celery_main():
-    grid = celery_construct_grid_coords(2000, (-2, 2), (2, -2))
+    grid = celery_construct_grid_coords(20, (-2, 2), (2, -2))
 
     resultant_grid = [0 for i in range(len(grid))]
 
