@@ -22,20 +22,14 @@ def color_mapper(norm):
 	blue = (norm - (1/3)) * (3/2) if norm > 1/3 else 0
 	return (int(255*red), int(255*green), int(255*blue))
 	
-	
-	
 def colorer(grid):
 	max_ = max([max(row) for row in grid])
 	min_ = min([min(row) for row in grid])
 	
-	print("{} - {}".format(max_, min_))
-
 	image = Image.new('RGB', (len(grid), len(grid[0])))
 	draw = ImageDraw.Draw(image)
 	for row_index, row in tqdm(enumerate(grid)):
 		for col_index, value in enumerate(row):
-			# print((value - min_) / (max_ - min_))
-
 			draw.point((row_index, col_index), (color_mapper((value - min_) / (max_ - min_))))
 	image.save('image.png')
 	
