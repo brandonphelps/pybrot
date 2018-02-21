@@ -4,7 +4,7 @@ import time
 import uuid
 import json
 from threading import Thread
-
+import argparse
 
 class Worker:
     def __init__(self, redis_con):
@@ -14,6 +14,8 @@ class Worker:
         self.pubsub.subscribe(self._id)
         self.proc_thread = Thread(target=self.process_work)
         self.running = True
+        self.request_work_timer_max = 20
+        self.request_work_timer = 0
 
     def start(self):
         self.proc_thread.start()
@@ -26,6 +28,10 @@ class Worker:
     def process_work(self):
         while self.running:
             time.sleep(1)
+            self.request_work_timer -= 1
+            if self.request_work_timer <= 0:
+                self.request_work()
+
             p = self.pubsub.get_message()
             if p:
                 try:
@@ -38,10 +44,11 @@ class Worker:
     def do_work(self, job_info):
         print("WORKER: Doing the job {}".format(job_info))
         time.sleep(int(job_info))
-        self.request_work()
+        # self.request_work()
 
     def request_work(self):
         print("Worker: Requsing more work")
+        self.request_work_timer = self.request_work_timer_max
         self.redis_con.publish('needs-job', json.dumps({'needs-work' : self._id}))
 
 class Manager:
@@ -108,20 +115,41 @@ def post_job(redis_con, job_info):
     redis_con.publish('user-job', job_info)
 
 
+
+
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    
+    group.add_argument('--worker', action='store_true')
+    group.add_argument('--manager', action='store_true')
+    group.add_argument('--cli', action='store_true')
+
+    args = parser.parse_args()
+
     r = redis.StrictRedis(host='192.168.1.200', port=6379, db=0)
-    m = Manager(r)
 
-    w = Worker(r)
 
-    m.start()
-    w.start()
-    post_job(r, json.dumps({'user-job': '10'}))
-    post_job(r, json.dumps({'user-job': '10'}))
-    post_job(r, json.dumps({'user-job': '20'}))
-    post_job(r, json.dumps({'user-job': '30'}))
-    post_job(r, json.dumps({'user-job': '50'}))
-    post_job(r, json.dumps({'user-job': '40'}))
-    time.sleep(500)
-    m.stop()
-    w.stop()
+
+    if args.worker:
+        w = Worker(r)
+        w.start()
+        time.sleep(500)
+        w.stop()
+    if args.manager:
+        m = Manager(r)
+        m.start()
+        time.sleep(500)
+        m.stop()
+    if args.cli:
+        post_job(r, json.dumps({'user-job': '10'}))
+        post_job(r, json.dumps({'user-job': '10'}))
+        post_job(r, json.dumps({'user-job': '20'}))
+        post_job(r, json.dumps({'user-job': '30'}))
+        post_job(r, json.dumps({'user-job': '50'}))
+        post_job(r, json.dumps({'user-job': '40'}))
+
+
+
