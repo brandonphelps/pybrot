@@ -36,7 +36,7 @@ class Worker:
             if p:
                 try:
                     print(p)
-                    json_data = json.loads(p['data'])
+                    json_data = json.loads(p['data'].decode('utf-8'))
                 except Exception as e:
                     continue
                 self.do_work(json_data['user-job'])
@@ -99,7 +99,6 @@ class Manager:
             print("Manager: Got result of job: {}".format(json_data['job_id']))
             print("Manager: Result {}".format(json_data['result']))
 
-
     def add_job(self, job_info):
         print("Manager: adding job {}".format(job_info))
         self.jobs.put(job_info)
@@ -155,12 +154,12 @@ if __name__ == "__main__":
         time.sleep(500)
         m.stop()
     if args.cli:
-        post_job(r, json.dumps({'user-job': '10'}))
-        post_job(r, json.dumps({'user-job': '10'}))
-        post_job(r, json.dumps({'user-job': '20'}))
-        post_job(r, json.dumps({'user-job': '30'}))
-        post_job(r, json.dumps({'user-job': '50'}))
-        post_job(r, json.dumps({'user-job': '40'}))
+        post_job(r, json.dumps({'user-job': '1'}))
+        post_job(r, json.dumps({'user-job': '1'}))
+        post_job(r, json.dumps({'user-job': '2'}))
+        post_job(r, json.dumps({'user-job': '3'}))
+        post_job(r, json.dumps({'user-job': '5'}))
+        post_job(r, json.dumps({'user-job': '4'}))
 
 
 
