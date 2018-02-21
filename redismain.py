@@ -44,7 +44,9 @@ class Worker:
     def do_work(self, job_info):
         print("WORKER: Doing the job {}".format(job_info))
         time.sleep(int(job_info))
-        # self.request_work()
+        self.redis_con.publish('results', json.dumps({'id' : self._id,
+                                                      'job_id' : 0,
+                                                      'result' : job_info}))
 
     def request_work(self):
         print("Worker: Requsing more work")
@@ -55,7 +57,7 @@ class Manager:
     def __init__(self, redis_con):
         self.redis_con = redis_con
         self.pubsub = self.redis_con.pubsub()
-        self.pubsub.subscribe('needs-job', 'user-job')
+        self.pubsub.subscribe('needs-job', 'user-job', 'results')
         self.quein = Thread(target = self.queu_work)
         self.process_subs_thread = Thread(target = self.process_sub)
         self.process_subs_running = True
@@ -84,10 +86,19 @@ class Manager:
                 self.update_workers(json_data)
             elif 'user-job' in json_data.keys():
                 self.add_job(json_data)
+            elif 'result' in json_data.keys():
+                self.print_result(json_data)
+
 
     def update_workers(self, json_data):
         if 'needs-work' in json_data.keys():
             self.open_workers.put({'id' : json_data['needs-work']})
+
+    def print_result(self, json_data):
+        if 'result' in json_data.keys():
+            print("Manager: Got result of job: {}".format(json_data['job_id']))
+            print("Manager: Result {}".format(json_data['result']))
+
 
     def add_job(self, job_info):
         print("Manager: adding job {}".format(job_info))
