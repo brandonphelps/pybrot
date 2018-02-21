@@ -43,10 +43,12 @@ class Worker:
 
     def do_work(self, job_info):
         print("WORKER: Doing the job {}".format(job_info))
-        time.sleep(int(job_info))
+        s = sorted(job_info)
+        print('sorted: {}'.format(s))
+        # time.sleep(int(job_info))
         self.redis_con.publish('results', json.dumps({'id' : self._id,
                                                       'job_id' : 0,
-                                                      'result' : job_info}))
+                                                      'result' : s}))
 
     def request_work(self):
         print("Worker: Requsing more work")
@@ -124,10 +126,6 @@ def post_job(redis_con, job_info):
     print("posting job: {}".format(job_info))
     redis_con.publish('user-job', job_info)
 
-
-
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -154,12 +152,12 @@ if __name__ == "__main__":
         time.sleep(500)
         m.stop()
     if args.cli:
-        post_job(r, json.dumps({'user-job': '1'}))
-        post_job(r, json.dumps({'user-job': '1'}))
-        post_job(r, json.dumps({'user-job': '2'}))
-        post_job(r, json.dumps({'user-job': '3'}))
-        post_job(r, json.dumps({'user-job': '5'}))
-        post_job(r, json.dumps({'user-job': '4'}))
+        post_job(r, json.dumps({'user-job': [1, 2, 3, 4, 5, 6, 7]}))
+        post_job(r, json.dumps({'user-job': [1, 0, 3, 23, 5, 6, 7]}))
+        post_job(r, json.dumps({'user-job': [4, 52, 2, 34, 23, 7]}))
+        post_job(r, json.dumps({'user-job': [1, 2, 3, 4, 5, 34, 7]}))
+        post_job(r, json.dumps({'user-job': [1, 2, 33, 4, 5, 6, 7]}))
+        post_job(r, json.dumps({'user-job': [1, 2, 3, 4, 5, 6, 7]}))
 
 
 
