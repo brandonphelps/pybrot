@@ -33,7 +33,7 @@ class Worker:
         print("Attempting to get another job")
         if deserializer:
             job = self.redis_con.blpop(JOB_Q_NAME)
-            job = deserializer(job[1])
+            job = deserializer(job[1].decode('utf-8'))
         else:
             #todo:
             pass
@@ -64,7 +64,7 @@ class Client:
             job = self.redis_con.blpop(RESULT_Q_NAME, timeout=1)
             if job is None:
                 break
-            yield deserializer(job[1])
+            yield deserializer(job[1].decode('utf-8'))
 
     def clear(self):
         self.redis_con.delete(JOB_Q_NAME)
