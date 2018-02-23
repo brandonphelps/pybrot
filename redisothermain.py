@@ -30,7 +30,6 @@ class Worker:
             print("total: {}".format(e - s))
 
     def do_work(self, serializer=json.dumps, deserializer=json.loads):
-        print("Attempting to get another job")
         if deserializer:
             job = self.redis_con.blpop(JOB_Q_NAME)
             job = deserializer(job[1].decode('utf-8'))
@@ -38,6 +37,7 @@ class Worker:
             #todo:
             pass
         results = []
+        print("Doing job: {}".format(job['job_id']))
         for i in job['jobs']:
             results.append(find_iter(i['real'], i['imag'], MAX_ITER))
 
