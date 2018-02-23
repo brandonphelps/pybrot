@@ -49,7 +49,12 @@ class Client:
         self.redis_con = redis_con
         self.finished_jobs = []
 
+        self.jobs_added = 0
+        self.jobs_pulled = 0
+        self.max_fail_count = 10
+
     def post_job(self, job_posting, serializer=json.dumps):
+        self.jobs_added += 1
         job_id = str(uuid.uuid4().hex)
         job = {'job_id' : job_id}
         job.update({'jobs' : job_posting})
@@ -59,12 +64,30 @@ class Client:
             self.redis_con.rpush(JOB_Q_NAME, serializer(job))
         return job_id
 
+    def get_result(self, deserializer=json.loads):
+        job = self.redis_con.blpop(RESULT_Q_NAME)
+        return deserializer(job[1].decode('utf-8'))
+
     def get_all_results(self, deserializer=json.loads):
+        timeout = 1
+        fail_count = 0
         while True:
-            job = self.redis_con.blpop(RESULT_Q_NAME, timeout=1)
+            job = self.redis_con.blpop(RESULT_Q_NAME, timeout=timeout)
             if job is None:
-                break
-            yield deserializer(job[1].decode('utf-8'))
+                if self.jobs_pulled < self.jobs_added:
+                    timeout = timeout * 2
+                    fail_count += 1
+                    if fail_count > self.max_fail_count:
+                        break
+                else:
+                    break
+            else:
+                self.jobs_pulled += 1
+                timeout = timeout // 2
+                if timeout <= 0:
+                    timeout = 1
+            if job:
+                yield deserializer(job[1].decode('utf-8'))
 
     def clear(self):
         self.redis_con.delete(JOB_Q_NAME)
@@ -86,52 +109,54 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     r = redis.StrictRedis(host='192.168.1.200', port=6379, db=0)
+    r.flushall()
+
     if args.worker:
         w = Worker(r)
         w.start()
     if args.cli:
         c = Client(r)
-        c.clear()
-
         return_ids = []
         count = 100
-        job_size = 100
+        job_size = 10
         gener = gen_grid(count, (-2, 2), (2, -2))
         keep_posing = True
-        while keep_posing:
-            jobs = []
-            for i in range(job_size):
-                try:
-                    tmp = next(gener)
-                except StopIteration:
-                    keep_posing = False
-                    break
+        with tqdm(total=count*count) as pbar:
+            while keep_posing:
+                jobs = []
+                for i in range(job_size):
+                    try:
+                        tmp = next(gener)
+                        pbar.update(1)
+                    except StopIteration:
+                        keep_posing = False
+                        break
                 
-                jobs.append({'real' : tmp[0], 'imag' : tmp[1]})
-            if jobs:
-                return_ids.append(c.post_job(jobs))
-
-        
-
-        current_id = return_ids.pop(0)
-        all_results = list(c.get_all_results())
+                    jobs.append({'real' : tmp[0], 'imag' : tmp[1]})
+                if jobs:
+                    return_ids.append(c.post_job(jobs))
         result_grid = []
         tmp = []
         width = 0
         max_width = count
-        while return_ids:
-            print("Searching for id: {}".format(current_id))
-            for i in all_results:
-                if i['job_id'] == current_id:
-                    for j in i['result']:
-                        tmp.append(j)
-                        width += 1
-                        if width == max_width:
-                            result_grid.append(tmp)
-                            width = 0
-                            tmp = []
-            current_id = return_ids.pop(0)
+        with tqdm(total=len(return_ids), 'building image') as pbar:
+            while return_ids:
+                next_job = c.get_result()
+                new_ids = []
+                for i in return_ids:
+                    if i == next_job['job_id']:
+                        current_results = next_job['result']
+                        pbar.update(1)
+                    else:
+                        new_ids.append(i)
+                return_ids = new_ids
 
-        pprint.pprint(result_grid)
+                for j in current_results:
+                    tmp.append(j)
+                    width += 1
+                    if width == max_width:
+                        result_grid.append(tmp)
+                        width = 0
+                        tmp = []
         colorer(result_grid)
         
