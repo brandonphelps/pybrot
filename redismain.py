@@ -5,6 +5,11 @@ import uuid
 import json
 from threading import Thread
 import argparse
+from mandelbrot import find_iter
+from objects import ComplexNumber, ComplexEncoder
+import numpy
+
+MAX_ITER = 10
 
 class Worker:
     def __init__(self, redis_con):
@@ -43,9 +48,7 @@ class Worker:
 
     def do_work(self, job_info):
         print("WORKER: Doing the job {}".format(job_info))
-        s = sorted(job_info)
-        print('sorted: {}'.format(s))
-        # time.sleep(int(job_info))
+        s = find_iter(job_info['real'], job_info['imag'], MAX_ITER)
         self.redis_con.publish('results', json.dumps({'id' : self._id,
                                                       'job_id' : 0,
                                                       'result' : s}))
@@ -66,6 +69,9 @@ class Manager:
         self.queu_jobs = True
         self.open_workers = Queue()
         self.jobs = Queue()
+        self.results = Queue()
+        self.waiting_for_jobs_to_finish = False
+        self.waiting_jobs = {}
 
     def start(self):
         self.quein.start()
@@ -90,7 +96,7 @@ class Manager:
                 self.add_job(json_data)
             elif 'result' in json_data.keys():
                 self.print_result(json_data)
-
+                self.results.put(json_data)
 
     def update_workers(self, json_data):
         if 'needs-work' in json_data.keys():
@@ -122,9 +128,23 @@ class Manager:
             print("{} found a worker for job {}".format(k, job))
             self.redis_con.publish(k['id'], json.dumps(job))
 
-def post_job(redis_con, job_info):
-    print("posting job: {}".format(job_info))
-    redis_con.publish('user-job', job_info)
+
+class ClientInterface:
+    def __init__(self, redis_con):
+        self.redis_con = redis_con
+        self.running = True
+        self.pubsub = self.redis_con.pubsub()
+
+    def post_job(self, job_info):
+        print("Posting job: {}".format(job_info))
+        self.redis_con.publish('user-job', job_info)
+    
+
+def gen_grid(count, upper_left, lower_right):
+    for i in numpy.linspace(upper_left[0], lower_right[0], count):
+        for j in numpy.linspace(upper_left[1], lower_right[1], count):
+            yield (i, j)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -137,10 +157,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    r = redis.StrictRedis(host='192.168.1.200', port=6379, db=0)
-
-
-
+    r = redis.StrictRedis(host='127.0.0.1', port=6379, db=0)
     if args.worker:
         w = Worker(r)
         w.start()
@@ -152,12 +169,16 @@ if __name__ == "__main__":
         time.sleep(500)
         m.stop()
     if args.cli:
-        post_job(r, json.dumps({'user-job': [1, 2, 3, 4, 5, 6, 7]}))
-        post_job(r, json.dumps({'user-job': [1, 0, 3, 23, 5, 6, 7]}))
-        post_job(r, json.dumps({'user-job': [4, 52, 2, 34, 23, 7]}))
-        post_job(r, json.dumps({'user-job': [1, 2, 3, 4, 5, 34, 7]}))
-        post_job(r, json.dumps({'user-job': [1, 2, 33, 4, 5, 6, 7]}))
-        post_job(r, json.dumps({'user-job': [1, 2, 3, 4, 5, 6, 7]}))
+        grid = [i for i in gen_grid(1000, (-2, 2), (2, -2))]
+
+        post_job(r, json.dumps({'user-job': {'real' : 2,
+                                             'imag' : 1}}))
+        post_job(r, json.dumps({'user-job': {'real' : 2,
+                                             'imag' : 1}}))
+        post_job(r, json.dumps({'user-job': {'real' : 2,
+                                             'imag' : 1}}))
 
 
 
+
+        

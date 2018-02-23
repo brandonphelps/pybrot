@@ -10,9 +10,7 @@ class ComplexEncoder(JSONEncoder):
 class ComplexDecoder(JSONDecoder):
     def default(self, obj):
         if isinstance(obj, list):
-
             return ComplexNumber(obj[0], obj[1])
-        print("blahs")
         return json.JSONDecoder.default(self, obj)
 
 class ComplexNumber:
