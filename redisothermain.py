@@ -139,7 +139,7 @@ if __name__ == "__main__":
         tmp = []
         width = 0
         max_width = count
-        with tqdm(total=len(return_ids), 'building image') as pbar:
+        with tqdm(total=len(return_ids)) as pbar:
             while return_ids:
                 next_job = c.get_result()
                 new_ids = []
