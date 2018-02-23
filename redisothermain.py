@@ -8,12 +8,13 @@ from datetime import datetime
 from mandelbrot import find_iter
 import numpy
 from tqdm import tqdm
+from color_test import colorer
+import pprint
 
 JOB_Q_NAME = 'jobs'
 RESULT_Q_NAME = 'results'
 
-MAX_ITER = 4000
-
+MAX_ITER = 10000
 
 class Worker:
     def __init__(self, redis_con):
@@ -32,12 +33,10 @@ class Worker:
         print("Attempting to get another job")
         if deserializer:
             job = self.redis_con.blpop(JOB_Q_NAME)
-            print(job)
             job = deserializer(job[1])
         else:
             #todo:
             pass
-        print("sleeping for: {}".format(job))
         results = []
         for i in job['jobs']:
             results.append(find_iter(i['real'], i['imag'], MAX_ITER))
@@ -54,8 +53,6 @@ class Client:
         job_id = str(uuid.uuid4().hex)
         job = {'job_id' : job_id}
         job.update({'jobs' : job_posting})
-
-        print("Posting: {}".format(job))
         if serializer is None:
             self.redis_con.rpush(JOB_Q_NAME, job)
         else:
@@ -114,8 +111,27 @@ if __name__ == "__main__":
             if jobs:
                 return_ids.append(c.post_job(jobs))
 
+        
 
-        for i in c.get_all_results():
-            print(i)
+        current_id = return_ids.pop(0)
+        all_results = list(c.get_all_results())
+        result_grid = []
+        tmp = []
+        width = 0
+        max_width = count
+        while return_ids:
+            print("Searching for id: {}".format(current_id))
+            for i in all_results:
+                if i['job_id'] == current_id:
+                    for j in i['result']:
+                        tmp.append(j)
+                        width += 1
+                        if width == max_width:
+                            result_grid.append(tmp)
+                            width = 0
+                            tmp = []
+            current_id = return_ids.pop(0)
 
+        pprint.pprint(result_grid)
+        colorer(result_grid)
         
