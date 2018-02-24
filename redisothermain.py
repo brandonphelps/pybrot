@@ -39,12 +39,10 @@ class Worker:
         results = []
         print("Doing job: {}".format(job['job_id']))
         for i in tqdm(job['jobs']):
-            results.append(find_iter(i['real'], i['imag'], MAX_ITER))
+            results.append(find_iter(i['real'], i['imag'], int(i['max_iter'])))
 
         resultsz = serializer({'result' : results,
                                'job_id' : job['job_id']})
-
-        print("returning results: {}".format(resultsz))
 
         self.redis_con.rpush(RESULT_Q_NAME, resultsz)
 class Client:
@@ -121,9 +119,9 @@ if __name__ == "__main__":
     if args.cli:
         c = Client(r)
         return_ids = []
-        count = 1000
-        job_size = (count * count) // 10
-        gener = gen_grid(count, (-2, 2), (1, -2))
+        count = 10000
+        job_size = 500
+        gener = gen_grid(count, (-2, .125), (-1.625, -.125))
         pixel_coord = (0, 0)
         keep_posing = True
         with tqdm(total=count*count) as pbar:
@@ -136,7 +134,7 @@ if __name__ == "__main__":
                     except StopIteration:
                         keep_posing = False
                         break
-                    jobs.append({'real' : tmp[0], 'imag' : tmp[1]})
+                    jobs.append({'real' : tmp[0], 'imag' : tmp[1], 'max_iter' : MAX_ITER})
                     if pixel_coord[1] > count:
                         pixel_coord = (pixel_coord[0] + 1, 0)
                     else:
@@ -168,7 +166,7 @@ if __name__ == "__main__":
                     finished_pool.append(current_results)
         
         height = 0
-        with tqdm(total=len(finished_pool)):
+        with tqdm(total=len(sorted_ids)):
             tmp = []
             for i in sorted_ids:
                 for j in finished_pool:
