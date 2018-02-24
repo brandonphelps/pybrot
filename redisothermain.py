@@ -115,8 +115,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     r = redis.StrictRedis(host='192.168.1.200', port=6379, db=0)
-    r.flushall()
-
     if args.worker:
         w = Worker(r)
         w.start()
