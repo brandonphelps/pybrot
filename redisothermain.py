@@ -38,7 +38,7 @@ class Worker:
             pass
         results = []
         print("Doing job: {}".format(job['job_id']))
-        for i in job['jobs']:
+        for i in tqdm(job['jobs']):
             results.append(find_iter(i['real'], i['imag'], MAX_ITER))
 
         self.redis_con.rpush(RESULT_Q_NAME, serializer({'result' : results,
@@ -121,8 +121,8 @@ if __name__ == "__main__":
         c = Client(r)
         return_ids = []
         count = 1000
-        job_size = (count*count) // 100
-        gener = gen_grid(count, (-2, 2), (2, -2))
+        job_size = (count*count) // 10
+        gener = gen_grid(count, (-2, 2), (1, -2))
         keep_posing = True
         with tqdm(total=count*count) as pbar:
             while keep_posing:
