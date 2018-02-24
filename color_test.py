@@ -30,7 +30,11 @@ def colorer(grid):
 	draw = ImageDraw.Draw(image)
 	for row_index, row in tqdm(enumerate(grid)):
 		for col_index, value in enumerate(row):
-			draw.point((row_index, col_index), (color_mapper((value - min_) / (max_ - min_))))
+			if value == 0:
+				draw.point((row_index, col_index), (0, 0, 0))
+			else:
+				draw.point((row_index, col_index), (color_mapper((value - min_) / (max_ - min_))))
+			
 	image.save('image.png')
 	
 if __name__ == "__main__":		

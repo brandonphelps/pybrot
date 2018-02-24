@@ -14,7 +14,7 @@ import pprint
 JOB_Q_NAME = 'jobs'
 RESULT_Q_NAME = 'results'
 
-MAX_ITER = 1000
+MAX_ITER = 10000
 
 class Worker:
     def __init__(self, redis_con):
@@ -66,8 +66,7 @@ class Client:
         return job_id
 
     def get_result(self, timeout=0, deserializer=json.loads):
-
-        job = self.redis_con.blpop(RESULT_Q_NAME,timeout=timeout)
+        job = self.redis_con.blpop(RESULT_Q_NAME, timeout=timeout)
         if job:
             job = deserializer(job[1].decode('utf-8'))
         return job
@@ -119,7 +118,7 @@ if __name__ == "__main__":
     if args.cli:
         c = Client(r)
         return_ids = []
-        count = 10000
+        count = 100
         job_size = 500
         gener = gen_grid(count, (-2, .125), (-1.625, -.125))
         pixel_coord = (0, 0)
@@ -135,10 +134,6 @@ if __name__ == "__main__":
                         keep_posing = False
                         break
                     jobs.append({'real' : tmp[0], 'imag' : tmp[1], 'max_iter' : MAX_ITER})
-                    if pixel_coord[1] > count:
-                        pixel_coord = (pixel_coord[0] + 1, 0)
-                    else:
-                        pixel_coord = (pixel_coord[0], pixel_coord[1] + 1)
                 if jobs:
                     return_ids.append(c.post_job(jobs))
         result_grid = []
@@ -147,6 +142,8 @@ if __name__ == "__main__":
         max_width = count
         finished_pool = []
         sorted_ids = list(return_ids)
+
+        print("Gathering results")
 
         with tqdm(total=len(return_ids)) as pbar:
             while return_ids:
@@ -160,10 +157,14 @@ if __name__ == "__main__":
                             pbar.update(1)
                             break
                 else:
+                    print("./Shrug: {}".format(next_job))
                     continue
+                
 
                 if current_results:
                     finished_pool.append(current_results)
+        
+        print("Sorting through results")
         
         height = 0
         with tqdm(total=len(sorted_ids)):
