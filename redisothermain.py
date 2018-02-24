@@ -39,7 +39,6 @@ class Worker:
         results = []
         print("Doing job: {}".format(job['job_id']))
         for i in tqdm(job['jobs']):
-            print("Job coords: {}".format(i['coord']))
             results.append(find_iter(i['real'], i['imag'], MAX_ITER))
 
         resultsz = serializer({'result' : results,
@@ -124,8 +123,8 @@ if __name__ == "__main__":
     if args.cli:
         c = Client(r)
         return_ids = []
-        count = 11
-        job_size = 4
+        count = 1000
+        job_size = (count * count) // 10
         gener = gen_grid(count, (-2, 2), (1, -2))
         pixel_coord = (0, 0)
         keep_posing = True
@@ -139,12 +138,11 @@ if __name__ == "__main__":
                     except StopIteration:
                         keep_posing = False
                         break
-                    jobs.append({'real' : tmp[0], 'imag' : tmp[1], 'coord' : pixel_coord})
+                    jobs.append({'real' : tmp[0], 'imag' : tmp[1]})
                     if pixel_coord[1] > count:
                         pixel_coord = (pixel_coord[0] + 1, 0)
                     else:
                         pixel_coord = (pixel_coord[0], pixel_coord[1] + 1)
-                    print("Pixel coords: {}".format(pixel_coord))
                 if jobs:
                     return_ids.append(c.post_job(jobs))
         result_grid = []
@@ -171,29 +169,19 @@ if __name__ == "__main__":
                 if current_results:
                     finished_pool.append(current_results)
         
-        print("Order of jobs")
-        for i in sorted_ids:
-            print(i)
-        
-
-        pixel_coord = (0, 0)
         height = 0
         with tqdm(total=len(finished_pool)):
             tmp = []
             for i in sorted_ids:
                 for j in finished_pool:
                     if i == j['job_id']:
-                        print("updating using job id: {}".format(j['result']))
                         pbar.update(1)
                         for k in j['result']:
                             tmp.append(k)
-                            print("Placing pixel at: {}".format(pixel_coord))
-                            pixel_coord = pixel_coord[0], height
                             height += 1
                             if height == count: # count also the width and height of the image
                                 result_grid.append(tmp)
                                 height = 0
-                                pixel_coord = pixel_coord[0] + 1, height
                                 tmp = []
 
         max_iter = max([max(row) for row in result_grid])
