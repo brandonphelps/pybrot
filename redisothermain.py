@@ -64,9 +64,12 @@ class Client:
             self.redis_con.rpush(JOB_Q_NAME, serializer(job))
         return job_id
 
-    def get_result(self, deserializer=json.loads):
-        job = self.redis_con.blpop(RESULT_Q_NAME)
-        return deserializer(job[1].decode('utf-8'))
+    def get_result(self, timeout=0, deserializer=json.loads):
+
+        job = self.redis_con.blpop(RESULT_Q_NAME,timeout=timeout)
+        if job:
+            job = deserializer(job[1].decode('utf-8'))
+        return job
 
     def get_all_results(self, deserializer=json.loads):
         timeout = 1
@@ -117,8 +120,8 @@ if __name__ == "__main__":
     if args.cli:
         c = Client(r)
         return_ids = []
-        count = 100
-        job_size = 10
+        count = 1000
+        job_size = (count*count) // 100
         gener = gen_grid(count, (-2, 2), (2, -2))
         keep_posing = True
         with tqdm(total=count*count) as pbar:
@@ -139,24 +142,37 @@ if __name__ == "__main__":
         tmp = []
         width = 0
         max_width = count
+        finished_pool = []
+        sorted_ids = list(return_ids)
         with tqdm(total=len(return_ids)) as pbar:
             while return_ids:
-                next_job = c.get_result()
-                new_ids = []
-                for i in return_ids:
-                    if i == next_job['job_id']:
-                        current_results = next_job['result']
-                        pbar.update(1)
-                    else:
-                        new_ids.append(i)
-                return_ids = new_ids
+                next_job = c.get_result(timeout=10)
+                current_results = None
+                if next_job:
+                    for i in return_ids:
+                        if i == next_job['job_id']:
+                            return_ids.remove(i)
+                            current_results = next_job
+                            pbar.update(1)
+                            break
+                else:
+                    continue
 
-                for j in current_results:
-                    tmp.append(j)
-                    width += 1
-                    if width == max_width:
-                        result_grid.append(tmp)
-                        width = 0
-                        tmp = []
+                if current_results:
+                    finished_pool.append(current_results)
+        
+        with tqdm(total=len(finished_pool)):
+            tmp = []
+            for i in sorted_ids:
+                for j in finished_pool:
+                    if i == j['job_id']:
+                        pbar.update(1)
+                        for k in j['result']:
+                            tmp.append(k)
+                            width += 1
+                            if width == max_width:
+                                result_grid.append(tmp)
+                                width = 0
+                                tmp = []
         colorer(result_grid)
         
