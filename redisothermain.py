@@ -54,9 +54,10 @@ class Client:
         self.jobs_pulled = 0
         self.max_fail_count = 10
 
-    def post_job(self, job_posting, serializer=json.dumps):
+    def post_job(self, job_posting, serializer=json.dumps, job_id=None):
         self.jobs_added += 1
-        job_id = str(uuid.uuid4().hex)
+        if job_id is None:
+            job_id = str(uuid.uuid4().hex)
         job = {'job_id' : job_id}
         job.update({'jobs' : job_posting})
         if serializer is None:
@@ -118,9 +119,10 @@ if __name__ == "__main__":
     if args.cli:
         c = Client(r)
         return_ids = []
-        count = 100
+        count = 10000
         job_size = 500
-        gener = gen_grid(count, (-2, .125), (-1.625, -.125))
+        all_jobs = {}
+        gener = gen_grid(count, (-1.8125, .0625), (-1.625, -.0625))
         pixel_coord = (0, 0)
         keep_posing = True
         with tqdm(total=count*count) as pbar:
@@ -135,7 +137,9 @@ if __name__ == "__main__":
                         break
                     jobs.append({'real' : tmp[0], 'imag' : tmp[1], 'max_iter' : MAX_ITER})
                 if jobs:
-                    return_ids.append(c.post_job(jobs))
+                    job_id = c.post_job(jobs)
+                    return_ids.append(job_id)
+                    all_jobs[job_id] = jobs
         result_grid = []
         tmp = []
         width = 0
@@ -145,6 +149,9 @@ if __name__ == "__main__":
 
         print("Gathering results")
 
+        job_resend_counter = 0
+        max_job_resend_count = 3
+
         with tqdm(total=len(return_ids)) as pbar:
             while return_ids:
                 next_job = c.get_result(timeout=10)
@@ -153,21 +160,26 @@ if __name__ == "__main__":
                     for i in return_ids:
                         if i == next_job['job_id']:
                             return_ids.remove(i)
+                            del all_jobs[i]
                             current_results = next_job
                             pbar.update(1)
                             break
                 else:
-                    print("./Shrug: {}".format(next_job))
+                    job_resend_counter += 1
+                    if job_resend_counter > max_job_resend_count:
+                        for key, value in tqdm(all_jobs.items(), "Re submitting jobs"):
+                            c.post_job(value, job_id=key)
+                        job_resend_counter = 0
                     continue
                 
-
                 if current_results:
+                    #todo: change this to a dict, where the keys are the job ids 
                     finished_pool.append(current_results)
         
         print("Sorting through results")
         
         height = 0
-        with tqdm(total=len(sorted_ids)):
+        with tqdm(total=len(sorted_ids)) as pbar:
             tmp = []
             for i in sorted_ids:
                 for j in finished_pool:
